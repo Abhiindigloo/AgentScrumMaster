@@ -3,6 +3,9 @@
 export { useVideoPlayer, useSceneTimer } from './hooks';
 export type { SceneDurations, UseVideoPlayerOptions, UseVideoPlayerReturn } from './hooks';
 
+export { useRecorder } from './recorder';
+export type { RecorderState, UseRecorderReturn } from './recorder';
+
 export {
   springs,
   easings,
