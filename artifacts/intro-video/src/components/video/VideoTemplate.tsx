@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useVideoPlayer, useRecorder } from '@/lib/video';
 import { Scene0_Intro, Scene1_Core, Scene2_Arch, Scene3_Outro } from './AgentScrumMasterScenes';
@@ -12,14 +13,16 @@ const SCENE_DURATIONS = {
 const TOTAL_DURATION = Object.values(SCENE_DURATIONS).reduce((a, b) => a + b, 0);
 
 export default function VideoTemplate() {
+  const containerRef = useRef<HTMLDivElement>(null);
   const { currentScene } = useVideoPlayer({
     durations: SCENE_DURATIONS,
   });
 
-  const { state, record, downloadVideo, reset, error } = useRecorder(TOTAL_DURATION);
+  const { state, progress, record, downloadVideo, reset } = useRecorder(containerRef, TOTAL_DURATION);
 
   return (
     <div
+      ref={containerRef}
       className="w-full h-screen overflow-hidden relative font-body"
       style={{ backgroundColor: 'var(--color-bg-dark)' }}
     >
@@ -31,7 +34,7 @@ export default function VideoTemplate() {
         loop
         playsInline
       />
-      
+
       <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg-dark)] via-transparent to-[var(--color-bg-dark)] opacity-80" />
 
       <AnimatePresence mode="wait">
@@ -58,14 +61,29 @@ export default function VideoTemplate() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-red-500/20 backdrop-blur-md border border-red-500/40 text-red-300 text-sm font-medium"
+            className="flex items-center gap-3 px-5 py-2.5 rounded-full bg-red-500/20 backdrop-blur-md border border-red-500/40 text-red-300 text-sm font-medium"
           >
             <motion.span
               className="w-3 h-3 rounded-full bg-red-500"
               animate={{ opacity: [1, 0.3, 1] }}
               transition={{ repeat: Infinity, duration: 1 }}
             />
-            Recording... ({Math.round(TOTAL_DURATION / 1000)}s)
+            Recording {progress}%
+          </motion.div>
+        )}
+
+        {state === 'processing' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--color-accent)]/20 backdrop-blur-md border border-[var(--color-accent)]/40 text-[var(--color-accent-light)] text-sm font-medium"
+          >
+            <motion.span
+              className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+            />
+            Preparing download...
           </motion.div>
         )}
 
@@ -95,17 +113,6 @@ export default function VideoTemplate() {
           </motion.div>
         )}
       </div>
-
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl bg-red-500/20 backdrop-blur-md border border-red-500/30 text-red-300 text-sm max-w-lg text-center"
-        >
-          {error}
-        </motion.div>
-      )}
     </div>
   );
 }
