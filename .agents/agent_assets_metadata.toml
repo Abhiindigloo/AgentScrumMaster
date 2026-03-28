@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "xjTvxcuyQ-NTZm-Nssmfp"
+uri = "file://docs/AgentScrumMaster-Boilerplates.md"
+type = "text"
+title = "AgentScrumMaster Boilerplates"
+
+[[outputs]]
+id = "yP5A0HHapNKPRGvRlNkEh"
+uri = "file://docs/AgentScrumMaster-Security-Plan.md"
+type = "text"
+title = "AgentScrumMaster Security Plan"
