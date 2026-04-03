@@ -6,7 +6,15 @@
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "lint": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "docker:up": "docker compose -f devops/docker/docker-compose.yml up -d --build",
+    "docker:down": "docker compose -f devops/docker/docker-compose.yml down",
+    "docker:logs": "docker compose -f devops/docker/docker-compose.yml logs -f",
+    "setup": "bash devops/scripts/setup.sh",
+    "healthcheck": "bash devops/scripts/healthcheck.sh",
+    "release": "bash devops/scripts/release.sh"
   },
   "private": true,
   "devDependencies": {
