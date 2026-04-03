@@ -48,6 +48,39 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 
 - `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
 - `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+- `pnpm run lint` — check code formatting with Prettier
+- `pnpm run format` — auto-format code with Prettier
+- `pnpm run docker:up` — start all Docker services (API + DB + Web)
+- `pnpm run docker:down` — stop Docker services
+- `pnpm run docker:logs` — tail Docker service logs
+- `pnpm run setup` — full dev environment setup script
+- `pnpm run healthcheck` — check health of all running services
+- `pnpm run release <version>` — create a tagged release (triggers deploy pipeline)
+
+## DevOps
+
+### CI/CD (GitHub Actions)
+- `.github/workflows/ci.yml` — runs on push/PR to main/develop: lint, typecheck, build, security audit, Docker build
+- `.github/workflows/deploy.yml` — triggered by version tags (`v*`): builds and pushes Docker images to GHCR, deploys to staging/production
+- `.github/workflows/pr-checks.yml` — PR quality gates: bundle size report, commit message check
+
+### Docker
+- `devops/docker/Dockerfile.api` — multi-stage build for API server (Node.js Alpine, non-root user, healthcheck)
+- `devops/docker/Dockerfile.web` — multi-stage build for intro video (Nginx Alpine, gzip, SPA routing)
+- `devops/docker/docker-compose.yml` — full stack: PostgreSQL 16, API server, intro video site
+- `devops/docker/nginx.conf` — production Nginx config with caching, gzip, SPA fallback
+
+### Scripts
+- `devops/scripts/setup.sh` — automated dev environment bootstrap
+- `devops/scripts/healthcheck.sh` — service health verification with retries
+- `devops/scripts/release.sh` — semver tag creation and push
+
+### Code Quality
+- `.prettierrc` — Prettier config (semicolons, double quotes, 100 char width)
+- `.prettierignore` — Prettier ignore rules
+- `.github/PULL_REQUEST_TEMPLATE.md` — PR template with checklist
+- `.github/CODEOWNERS` — automatic reviewer assignments
+- `.env.example` — environment variable template
 
 ## Packages
 
