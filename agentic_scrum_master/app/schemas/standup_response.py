@@ -28,6 +28,10 @@ class StandupResponse(BaseModel):
         ...,
         description="List of blocker keywords found in the update text.",
     )
+    blocker_categories: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="Matched keywords grouped by category (dependency, environment, approval, technical_issue, delay, unknown).",
+    )
     status_summary: str = Field(
         ...,
         description="Concise one-line summary of the standup update.",
