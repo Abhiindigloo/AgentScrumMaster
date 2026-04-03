@@ -5,14 +5,72 @@ from app.core.logging_config import get_logger
 
 logger = get_logger(__name__)
 
-BLOCKER_KEYWORDS: list[str] = [
+BLOCKER_CATEGORY_MAP: dict[str, list[str]] = {
+    "dependency": [
+        "dependency",
+        "dependent on",
+        "depends on",
+        "waiting for",
+        "waiting on",
+        "need from",
+        "needs from",
+        "upstream",
+    ],
+    "environment": [
+        "environment",
+        "staging",
+        "production",
+        "infra",
+        "infrastructure",
+        "server down",
+        "outage",
+        "deployment",
+        "pipeline",
+        "ci/cd",
+        "no access",
+        "access denied",
+        "permission",
+        "credentials",
+        "vpn",
+    ],
+    "approval": [
+        "approval",
+        "pending review",
+        "needs review",
+        "pending sign-off",
+        "sign-off",
+        "waiting for approval",
+        "manager",
+    ],
+    "technical_issue": [
+        "bug",
+        "broken",
+        "failing",
+        "failed",
+        "crash",
+        "error",
+        "exception",
+        "timeout",
+        "flaky",
+        "issue",
+    ],
+    "delay": [
+        "delayed",
+        "postponed",
+        "on hold",
+        "pushed back",
+        "rescheduled",
+        "slipped",
+    ],
+}
+
+GENERAL_BLOCKER_KEYWORDS: list[str] = [
     "blocked",
     "blocker",
     "stuck",
-    "dependency",
-    "waiting",
-    "issue",
-    "delayed",
+    "cannot proceed",
+    "can't proceed",
+    "impediment",
 ]
 
 
@@ -20,7 +78,7 @@ class StandupAgent:
     """Agent responsible for analyzing a single team member's standup update.
 
     Accepts structured standup input, normalizes text, extracts key fields,
-    detects blocker signals, and returns a structured result dictionary.
+    detects and categorizes blocker signals, and returns a structured result.
     All logic is deterministic — no external LLM calls.
     """
 
@@ -41,7 +99,7 @@ class StandupAgent:
 
         Returns:
             Dictionary containing normalized fields, blocker detection
-            results, and a concise status summary.
+            results (with categories), and a concise status summary.
         """
         logger.info("Analyzing standup update for '%s'", member_name)
 
@@ -49,7 +107,7 @@ class StandupAgent:
         normalized_today = self._normalize_text(today)
         normalized_blockers = self._normalize_text(blockers) if blockers else ""
 
-        blocker_signals = self._detect_blocker_signals(
+        blocker_signals, blocker_categories = self._detect_blocker_signals(
             normalized_yesterday,
             normalized_today,
             normalized_blockers,
@@ -71,14 +129,16 @@ class StandupAgent:
             "normalized_blockers": normalized_blockers,
             "has_blockers": has_blockers,
             "blocker_signals": blocker_signals,
+            "blocker_categories": blocker_categories,
             "status_summary": status_summary,
         }
 
         logger.info(
-            "Standup analysis complete for '%s': has_blockers=%s, signals=%d",
+            "Standup analysis complete for '%s': has_blockers=%s, signals=%d, categories=%s",
             member_name,
             has_blockers,
             len(blocker_signals),
+            list(blocker_categories.keys()),
         )
         return result
 
@@ -91,10 +151,32 @@ class StandupAgent:
         yesterday: str,
         today: str,
         blockers: str,
-    ) -> list[str]:
-        """Scan all fields for blocker keywords and return matched signals."""
+    ) -> tuple[list[str], dict[str, list[str]]]:
+        """Scan all fields for blocker keywords, returning signals and categories.
+
+        Returns:
+            A tuple of (flat signal list, category-to-keywords mapping).
+        """
         combined = f"{yesterday} {today} {blockers}".lower()
-        return [kw for kw in BLOCKER_KEYWORDS if kw in combined]
+        matched_signals: list[str] = []
+        categories: dict[str, list[str]] = {}
+
+        for category, keywords in BLOCKER_CATEGORY_MAP.items():
+            hits = [kw for kw in keywords if kw in combined]
+            if hits:
+                matched_signals.extend(hits)
+                categories[category] = hits
+
+        general_hits = [kw for kw in GENERAL_BLOCKER_KEYWORDS if kw in combined]
+        if general_hits:
+            matched_signals.extend(general_hits)
+
+        if matched_signals and not categories:
+            categories["unknown"] = general_hits or matched_signals[:1]
+
+        matched_signals = list(dict.fromkeys(matched_signals))
+
+        return matched_signals, categories
 
     def _build_status_summary(
         self,
