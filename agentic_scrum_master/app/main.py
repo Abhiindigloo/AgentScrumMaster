@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.core.logging_config import setup_logging, get_logger
 from app.core.exceptions import AppException
+from app.api.routes.standup_routes import router as standup_router
 
 logger = get_logger(__name__)
 
@@ -72,6 +73,8 @@ def _register_exception_handlers(application: FastAPI) -> None:
 
 
 def _register_routes(application: FastAPI) -> None:
+    application.include_router(standup_router)
+
     @application.get("/api/healthz", tags=["health"])
     async def healthz() -> dict:
         settings = get_settings()
