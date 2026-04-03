@@ -1,0 +1,38 @@
+FROM node:20-alpine AS base
+RUN corepack enable && corepack prepare pnpm@10 --activate
+WORKDIR /app
+
+FROM base AS dependencies
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY artifacts/api-server/package.json artifacts/api-server/
+COPY lib/db/package.json lib/db/
+COPY lib/api-spec/package.json lib/api-spec/
+COPY lib/api-zod/package.json lib/api-zod/
+COPY lib/api-client-react/package.json lib/api-client-react/
+RUN pnpm install --frozen-lockfile --prod=false
+
+FROM dependencies AS build
+COPY tsconfig.base.json tsconfig.json ./
+COPY lib/ lib/
+COPY artifacts/api-server/ artifacts/api-server/
+RUN pnpm run typecheck:libs
+RUN pnpm --filter @workspace/api-server run build
+
+FROM node:20-alpine AS production
+RUN addgroup -g 1001 -S appgroup && adduser -S appuser -u 1001 -G appgroup
+WORKDIR /app
+
+COPY --from=build --chown=appuser:appgroup /app/artifacts/api-server/dist/ ./dist/
+COPY --from=build --chown=appuser:appgroup /app/artifacts/api-server/package.json ./
+
+ENV NODE_ENV=production
+ENV PORT=3000
+
+EXPOSE 3000
+
+USER appuser
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/healthz || exit 1
+
+CMD ["node", "--enable-source-maps", "dist/index.mjs"]
