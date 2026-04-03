@@ -128,3 +128,49 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+
+## Agentic Scrum Master (Python Backend)
+
+Standalone Python 3.11 FastAPI backend at `agentic-scrum-master/`. Implements an AI-powered Scrum facilitation agent.
+
+### Structure
+
+```text
+agentic-scrum-master/
+├── agents/              # Agent implementations (base, standup, blocker, summary)
+├── api/routes/          # FastAPI route handlers
+├── core/                # Config, logging, exceptions
+├── models/              # Domain entities (StandupUpdate, DailySummary)
+├── schemas/             # Pydantic request/response schemas
+├── services/            # Business logic (StandupService)
+├── utils/               # Dependency injection helpers
+├── tests/               # pytest test suite (agents, services, API)
+├── main.py              # Entry point
+└── requirements.txt     # Python dependencies
+```
+
+### Running
+
+```bash
+cd agentic-scrum-master
+pip install -r requirements.txt
+python main.py              # Starts on http://0.0.0.0:8000
+python -m pytest tests/ -v  # Run test suite
+```
+
+### API Endpoints
+
+- `GET  /api/healthz` — Health check
+- `POST /api/standups` — Submit standup update (auto-detects blockers)
+- `GET  /api/standups` — List updates by team/date
+- `GET  /api/standups/{id}` — Get specific update
+- `POST /api/standups/summary` — Generate daily summary
+- `GET  /api/standups/summary/{team_id}` — Get cached summary
+
+### Architecture
+
+- **StandupAgent** → orchestrates update processing, delegates to BlockerAgent
+- **BlockerAgent** → keyword + pattern-based blocker detection from text
+- **SummaryAgent** → aggregates team updates into daily summaries
+- **StandupService** → service layer managing agent pipelines + in-memory storage
+- In-memory storage (Phase 1); persistent DB planned for future phase
