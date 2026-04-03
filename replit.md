@@ -131,46 +131,44 @@ Utility scripts package. Each script is a `.ts` file in `src/` with a correspond
 
 ## Agentic Scrum Master (Python Backend)
 
-Standalone Python 3.11 FastAPI backend at `agentic-scrum-master/`. Implements an AI-powered Scrum facilitation agent.
+Standalone Python 3.11 FastAPI backend at `agentic_scrum_master/`. Built phase-by-phase following clean architecture.
 
 ### Structure
 
 ```text
-agentic-scrum-master/
-├── agents/              # Agent implementations (base, standup, blocker, summary)
-├── api/routes/          # FastAPI route handlers
-├── core/                # Config, logging, exceptions
-├── models/              # Domain entities (StandupUpdate, DailySummary)
-├── schemas/             # Pydantic request/response schemas
-├── services/            # Business logic (StandupService)
-├── utils/               # Dependency injection helpers
-├── tests/               # pytest test suite (agents, services, API)
-├── main.py              # Entry point
-└── requirements.txt     # Python dependencies
+agentic_scrum_master/
+├── app/
+│   ├── main.py               # FastAPI app factory + health endpoint
+│   ├── core/
+│   │   ├── config.py          # Centralized settings (pydantic-settings)
+│   │   ├── logging_config.py  # Structured JSON/plain logging
+│   │   └── exceptions.py     # Base exception hierarchy
+│   ├── agents/               # Agent implementations (future)
+│   ├── services/             # Business logic layer (future)
+│   ├── schemas/              # Pydantic request/response models (future)
+│   ├── api/routes/           # API route modules (future)
+│   ├── models/               # Domain entities (future)
+│   ├── repositories/         # Data access layer (future)
+│   └── utils/                # Shared utilities (future)
+├── tests/                    # Test suite (future)
+├── requirements.txt
+└── .env.example
 ```
 
 ### Running
 
 ```bash
-cd agentic-scrum-master
+cd agentic_scrum_master
 pip install -r requirements.txt
-python main.py              # Starts on http://0.0.0.0:8000
-python -m pytest tests/ -v  # Run test suite
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### API Endpoints
+### Current API
 
-- `GET  /api/healthz` — Health check
-- `POST /api/standups` — Submit standup update (auto-detects blockers)
-- `GET  /api/standups` — List updates by team/date
-- `GET  /api/standups/{id}` — Get specific update
-- `POST /api/standups/summary` — Generate daily summary
-- `GET  /api/standups/summary/{team_id}` — Get cached summary
+- `GET /api/healthz` — Health check
 
-### Architecture
-
-- **StandupAgent** → orchestrates update processing, delegates to BlockerAgent
-- **BlockerAgent** → keyword + pattern-based blocker detection from text
-- **SummaryAgent** → aggregates team updates into daily summaries
-- **StandupService** → service layer managing agent pipelines + in-memory storage
-- In-memory storage (Phase 1); persistent DB planned for future phase
+### Current Phase: 1 (Skeleton)
+- FastAPI app factory with CORS, exception handlers
+- Centralized config via pydantic-settings
+- Structured logging (JSON for production, plain for dev)
+- Base exception hierarchy (AppException, ValidationError)
